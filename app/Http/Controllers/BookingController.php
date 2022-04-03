@@ -33,14 +33,15 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function index(Request $request)
+    public function index(Request $request) : mixed
     {
         if($user_id = $request->get('user_id')) {
 
             $response = $this->repository->getUsersJobs($user_id);
 
         }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
+        elseif($request->__authenticatedUser->user_type === env('ADMIN_ROLE_ID') ||
+         $request->__authenticatedUser->user_type === env('SUPERADMIN_ROLE_ID'))
         {
             $response = $this->repository->getAll($request);
         }
@@ -52,7 +53,7 @@ class BookingController extends Controller
      * @param $id
      * @return mixed
      */
-    public function show($id)
+    public function show($id) : mixed
     {
         $job = $this->repository->with('translatorJobRel.user')->find($id);
 
@@ -63,7 +64,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function store(Request $request)
+    public function store(Request $request) : mixed
     {
         $data = $request->all();
 
@@ -78,11 +79,14 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function update($id, Request $request)
+    public function update($id, Request $request) : mixed
     {
         $data = $request->all();
         $cuser = $request->__authenticatedUser;
-        $response = $this->repository->updateJob($id, array_except($data, ['_token', 'submit']), $cuser);
+        $response = $this->repository->updateJob($id,
+            array_except($data, ['_token', 'submit']),
+            $cuser
+        );
 
         return response($response);
     }
@@ -91,7 +95,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function immediateJobEmail(Request $request)
+    public function immediateJobEmail(Request $request) : mixed
     {
         $adminSenderEmail = config('app.adminemail');
         $data = $request->all();
@@ -105,11 +109,12 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function getHistory(Request $request)
+    public function getHistory(Request $request) : mixed
     {
         if($user_id = $request->get('user_id')) {
 
             $response = $this->repository->getUsersJobsHistory($user_id, $request);
+
             return response($response);
         }
 
@@ -120,7 +125,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function acceptJob(Request $request)
+    public function acceptJob(Request $request) : mixed
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
@@ -130,7 +135,7 @@ class BookingController extends Controller
         return response($response);
     }
 
-    public function acceptJobWithId(Request $request)
+    public function acceptJobWithId(Request $request) : mixed
     {
         $data = $request->get('job_id');
         $user = $request->__authenticatedUser;
@@ -144,7 +149,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function cancelJob(Request $request)
+    public function cancelJob(Request $request) : mixed
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
@@ -158,7 +163,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function endJob(Request $request)
+    public function endJob(Request $request) : mixed
     {
         $data = $request->all();
 
@@ -168,7 +173,7 @@ class BookingController extends Controller
 
     }
 
-    public function customerNotCall(Request $request)
+    public function customerNotCall(Request $request) : mixed
     {
         $data = $request->all();
 
@@ -182,7 +187,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return mixed
      */
-    public function getPotentialJobs(Request $request)
+    public function getPotentialJobs(Request $request) : mixed
     {
         $data = $request->all();
         $user = $request->__authenticatedUser;
@@ -192,7 +197,7 @@ class BookingController extends Controller
         return response($response);
     }
 
-    public function distanceFeed(Request $request)
+    public function distanceFeed(Request $request) : mixed
     {
         $data = $request->all();
 
@@ -216,20 +221,20 @@ class BookingController extends Controller
             $session = "";
         }
 
-        if ($data['flagged'] == 'true') {
-            if($data['admincomment'] == '') return "Please, add comment";
+        if ($data['flagged'] === 'true') {
+            if($data['admincomment'] === '') return "Please, add comment";
             $flagged = 'yes';
         } else {
             $flagged = 'no';
         }
         
-        if ($data['manually_handled'] == 'true') {
+        if ($data['manually_handled'] === 'true') {
             $manually_handled = 'yes';
         } else {
             $manually_handled = 'no';
         }
 
-        if ($data['by_admin'] == 'true') {
+        if ($data['by_admin'] === 'true') {
             $by_admin = 'yes';
         } else {
             $by_admin = 'no';
@@ -242,19 +247,28 @@ class BookingController extends Controller
         }
         if ($time || $distance) {
 
-            $affectedRows = Distance::where('job_id', '=', $jobid)->update(array('distance' => $distance, 'time' => $time));
+            $affectedRows = Distance::where('job_id', '=', $jobid)
+                ->update(array('distance' => $distance, 'time' => $time));
         }
 
         if ($admincomment || $session || $flagged || $manually_handled || $by_admin) {
 
-            $affectedRows1 = Job::where('id', '=', $jobid)->update(array('admin_comments' => $admincomment, 'flagged' => $flagged, 'session_time' => $session, 'manually_handled' => $manually_handled, 'by_admin' => $by_admin));
+            $affectedRows1 = Job::where('id', '=', $jobid)
+                ->update(
+                    array('admin_comments' => $admincomment,
+                    'flagged' => $flagged,
+                    'session_time' => $session,
+                    'manually_handled' => $manually_handled,
+                    'by_admin' => $by_admin
+                    )
+                );
 
         }
 
         return response('Record updated!');
     }
 
-    public function reopen(Request $request)
+    public function reopen(Request $request) : mixed
     {
         $data = $request->all();
         $response = $this->repository->reopen($data);
@@ -262,7 +276,7 @@ class BookingController extends Controller
         return response($response);
     }
 
-    public function resendNotifications(Request $request)
+    public function resendNotifications(Request $request) : mixed
     {
         $data = $request->all();
         $job = $this->repository->find($data['jobid']);
@@ -277,7 +291,7 @@ class BookingController extends Controller
      * @param Request $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
-    public function resendSMSNotifications(Request $request)
+    public function resendSMSNotifications(Request $request) : mixed
     {
         $data = $request->all();
         $job = $this->repository->find($data['jobid']);
